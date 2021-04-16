@@ -87,7 +87,7 @@
         <pathelement location="${lib.dir}/jna-platform.jar" />
         <pathelement location="${lib.dir}/jna.jar" />
 
-        <pathelement location="${svm.build}/svm-core.jar" />
+        <pathelement location="${svm.build}/svm.jar" />
         <pathelement location="${tools.build}/truffle-profiler.jar" />
     </path>
 
