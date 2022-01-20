@@ -28,6 +28,18 @@ class TransactionTests usingPlatform: platform testFramework: minitest = (
     )
   )
 
+  private class OverrideSelector = (
+    |public expected ::= #expected. |
+  ) (
+    public || other = (^ expected)
+    public && other = (^ expected)
+    public ifTrue: other = (^ expected)
+    public ifFalse: other = (^ expected)
+    public ifTrue: other ifFalse: other = (^ expected)
+    public to: other by: other do: other = (^ expected)
+    public to: other do: other = (^ expected)
+  )
+
   public class BasicTests = TestContext (
   | private value ::= false.
   |)(
@@ -253,6 +265,17 @@ class TransactionTests usingPlatform: platform testFramework: minitest = (
         do: [ v:: v + 1 ].
       assert: v equals: 2.
     )
+
+    public testOverrides = ( |obj|
+      obj:: OverrideSelector new.
+      assert: (obj expected) equals: (obj || obj).
+      assert: (obj expected) equals: (obj && obj).
+      assert: (obj expected) equals: (obj ifTrue: obj).
+      assert: (obj expected) equals: (obj ifFalse: obj).
+      assert: (obj expected) equals: (obj ifTrue: obj ifFalse: obj).
+      assert: (obj expected) equals: (obj to: obj by: obj do: obj).
+      assert: (obj expected) equals: (obj to: obj do: obj).
+    )
   ) : ( TEST_CONTEXT = () )
 
   public class CollectionsTests = TestContext ()(
@@ -329,4 +352,5 @@ class TransactionTests usingPlatform: platform testFramework: minitest = (
         assert: (set contains: each) ]
     )
   ) : ( TEST_CONTEXT = () )
+
 )

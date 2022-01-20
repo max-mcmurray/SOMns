@@ -32,8 +32,9 @@ public abstract class IntToDoMessageNode extends TernaryExpressionNode {
 
     @Override
     public boolean matches(final Object[] args, final ExpressionNode[] argNodes) {
-      return !VmSettings.DYNAMIC_METRICS && args[0] instanceof Long &&
-          (args[1] instanceof Long || args[1] instanceof Double) &&
+      return args != null && !VmSettings.DYNAMIC_METRICS 
+          && args[0] instanceof Long && 
+          (args[1] instanceof Long || args[1] instanceof Double) && 
           args[2] instanceof SBlock;
     }
   }

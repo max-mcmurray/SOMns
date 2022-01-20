@@ -2,18 +2,25 @@ package som.interpreter.nodes.specialized;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 
 import bd.primitives.Primitive;
+import som.compiler.AccessModifier;
 import som.interpreter.nodes.ExpressionNode;
+import som.interpreter.nodes.dispatch.AbstractDispatchNode;
+import som.interpreter.nodes.dispatch.UninitializedDispatchNode;
 import som.interpreter.nodes.nary.QuaternaryExpressionNode;
 import som.interpreter.objectstorage.ObjectTransitionSafepoint;
+import som.vm.Symbols;
 import som.vmobjects.SBlock;
 import som.vmobjects.SInvokable;
+import som.vmobjects.SObjectWithClass;
 import tools.dym.Tags.LoopNode;
 
 
@@ -24,8 +31,12 @@ public abstract class IntToByDoMessageNode extends QuaternaryExpressionNode {
   @Child protected DirectCallNode valueSend;
 
   public IntToByDoMessageNode(final Object[] args) {
-    blockMethod = ((SBlock) args[3]).getMethod();
-    valueSend = Truffle.getRuntime().createDirectCallNode(blockMethod.getCallTarget());
+    if (args[3] instanceof SBlock) {
+      blockMethod = ((SBlock) args[3]).getMethod();
+      valueSend = Truffle.getRuntime().createDirectCallNode(blockMethod.getCallTarget());
+    } else {
+      blockMethod = null;
+    }
   }
 
   @Override
@@ -74,5 +85,17 @@ public abstract class IntToByDoMessageNode extends QuaternaryExpressionNode {
   @Override
   public boolean isResultUsed(final ExpressionNode child) {
     return false;
+  }
+
+  protected AbstractDispatchNode createDispatch() {
+    return UninitializedDispatchNode.createRcvrSend(null, Symbols.symbolFor("to:by:do:"),
+      AccessModifier.PROTECTED);
+  }
+
+  @Specialization
+  public final Object normalMessageSend(VirtualFrame frame, SObjectWithClass rcvr,
+    Object val1, Object val2, Object val3,
+    @Cached("createDispatch()") AbstractDispatchNode dispatch) {
+    return dispatch.executeDispatch(frame, new Object[] {rcvr, val1, val2, val3});
   }
 }

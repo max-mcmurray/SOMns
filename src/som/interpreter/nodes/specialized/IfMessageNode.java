@@ -4,15 +4,21 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateNodeFactory;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
 import bd.primitives.Primitive;
+import som.compiler.AccessModifier;
+import som.interpreter.nodes.dispatch.AbstractDispatchNode;
+import som.interpreter.nodes.dispatch.UninitializedDispatchNode;
 import som.interpreter.nodes.nary.BinaryComplexOperation;
 import som.vm.constants.Nil;
+import som.vm.Symbols;
 import som.vmobjects.SBlock;
 import som.vmobjects.SInvokable;
+import som.vmobjects.SObjectWithClass;
 
 
 public abstract class IfMessageNode extends BinaryComplexOperation {
@@ -80,5 +86,16 @@ public abstract class IfMessageNode extends BinaryComplexOperation {
     } else {
       return Nil.nilObject;
     }
+  }
+
+  protected AbstractDispatchNode createDispatch() {
+    String messageName = expected ? "ifTrue:" : "ifFalse:";
+    return UninitializedDispatchNode.createRcvrSend(null, Symbols.symbolFor(messageName), AccessModifier.PROTECTED);
+  }
+
+  @Specialization
+  public final Object normalMessageSend(VirtualFrame frame, SObjectWithClass rcvr, Object other,
+      @Cached("createDispatch()") AbstractDispatchNode dispatch) {
+    return dispatch.executeDispatch(frame, new Object[] {rcvr, other});
   }
 }
